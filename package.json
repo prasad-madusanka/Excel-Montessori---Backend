@@ -1,0 +1,22 @@
+{
+  "name": "excel-backend-service",
+  "version": "1.0.0",
+  "description": "Excel Montessori Backend Serice",
+  "main": "server.js",
+  "scripts": {
+    "test": "run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://prasadMadusanka@bitbucket.org/prasadMadusanka/excel-montessori-backend.git"
+  },
+  "keywords": [
+    "excel",
+    "montessori",
+    "backend",
+    "service"
+  ],
+  "author": "Prasad madusanka",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/prasadMadusanka/excel-montessori-backend#readme"
+}
