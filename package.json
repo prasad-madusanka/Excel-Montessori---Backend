@@ -4,7 +4,8 @@
   "description": "Excel Montessori Backend Serice",
   "main": "server.js",
   "scripts": {
-    "test": "run"
+    "test": "run",
+    "start": "nodemon app.server.js"
   },
   "repository": {
     "type": "git",
@@ -18,5 +19,10 @@
   ],
   "author": "Prasad madusanka",
   "license": "ISC",
-  "homepage": "https://bitbucket.org/prasadMadusanka/excel-montessori-backend#readme"
+  "homepage": "https://bitbucket.org/prasadMadusanka/excel-montessori-backend#readme",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongoose": "^5.4.1"
+  }
 }
