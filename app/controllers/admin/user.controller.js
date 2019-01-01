@@ -30,7 +30,7 @@ module.exports = {
         userCollection.update(
             { _id: reqBody.uid },
             { password: reqBody.password },
-            { upsert: true })
+            { upsert: false })
 
             .then((data) => {
                 env.sendResponse(res, env.OK, data)
