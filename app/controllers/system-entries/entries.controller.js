@@ -46,13 +46,13 @@ module.exports = {
 
         var reqBody = req.body
 
-        npEntriesCollection.update(
+        npEntriesCollection.findOneAndUpdate(
             { _id: reqBody.eid },
             {
                 entryName: reqBody.entryName,
                 entryYear: reqBody.entryYear
             },
-            { upsert: false })
+            { new: true, upsert: false })
             .then((data) => {
                 env.sendResponse(res, env.OK, data)
             })
@@ -127,14 +127,14 @@ module.exports = {
 
         var reqBody = req.body
 
-        pEntriesCollection.update(
+        pEntriesCollection.findByIdAndUpdate(
             { _id: reqBody.eid },
             {
                 entryName: reqBody.entryName,
                 entryAmount: reqBody.entryAmount,
                 entryYear: reqBody.entryYear
             },
-            { upsert: false })
+            { new: true, upsert: false })
             .then((data) => {
                 env.sendResponse(res, env.OK, data)
             })

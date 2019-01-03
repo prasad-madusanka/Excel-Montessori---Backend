@@ -3,12 +3,25 @@ const env = require('./app/configuration/environment.config')
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
+const cors = require('cors')
 
 
 const app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
+
+var originsWhitelist = ['http://localhost:4200']
+
+var corsOptions = {
+    origin: function (origin, callback) {
+        var isWhitelisted = originsWhitelist.indexOf(origin) !== -1;
+        callback(null, isWhitelisted);
+    },
+    credentials: false
+}
+
+app.use(cors(corsOptions));
 
 mongoose.Promise = global.Promise
 

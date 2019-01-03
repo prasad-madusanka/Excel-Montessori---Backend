@@ -27,7 +27,7 @@ module.exports = {
 
         var reqBody = req.body
 
-        userCollection.update(
+        userCollection.updateOne(
             { _id: reqBody.uid },
             { password: reqBody.password },
             { upsert: false })
