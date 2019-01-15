@@ -42,6 +42,8 @@ app.get('/', (req, res) => {
 require('./app/routes/admin/user.route')(app)
 require('./app/routes/login/login.route')(app)
 require('./app/routes/system-entries/entries.route')(app)
+require('./app/routes/student/student.route')(app)
+require('./app/routes/payments/admission.route')(app)
 
 app.listen(env.PORT, () => {
     console.log('Server is running')

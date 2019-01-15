@@ -3,7 +3,8 @@ const mongoose = require('mongoose')
 const paymentEntriesSchema = mongoose.Schema({
     entryName: String,
     entryAmount: Number,
-    entryYear: Number
+    entryClass: String,
+    isSchool: Boolean
 }, {
         timestamps: true
     })

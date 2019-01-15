@@ -92,7 +92,8 @@ module.exports = {
         new pEntriesCollection({
             entryName: reqBody.entryName,
             entryAmount: reqBody.entryAmount,
-            entryYear: reqBody.entryYear
+            entryClass: reqBody.entryClass,
+            isSchool: reqBody.isSchool
         })
             .save()
             .then((data) => {
@@ -132,7 +133,7 @@ module.exports = {
             {
                 entryName: reqBody.entryName,
                 entryAmount: reqBody.entryAmount,
-                entryYear: reqBody.entryYear
+                entryClass: reqBody.entryClass
             },
             { new: true, upsert: false })
             .then((data) => {

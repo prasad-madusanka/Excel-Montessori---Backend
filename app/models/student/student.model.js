@@ -32,18 +32,27 @@ const studentSchema = mongoose.Schema({
     ecRelationship: String,
     ecAddress: String,
     ecTelephone: Number,
-    stIllnessTypes: [{
-        type: String
-    }],
-    ofFacilityType: Boolean,
+    stIllnessTypes: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Illnesses'
+    },
+    ofFacilityType: String,
     stAdmittedMonth: String,
     stAdmittedYear: Number,
     stAdmittedClass: String,
-    payments: {
+    discontinue: Boolean,
+    admissionPayment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Payments'
-    }
-
+        ref: 'Admission'
+    },
+    monthlyPayment:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:'Monthly_Fee'
+    }],
+    extraPayments:[{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:'Extra_Payments'
+    }]
 
 }, {
         timestamps: true

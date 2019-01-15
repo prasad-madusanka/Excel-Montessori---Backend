@@ -22,10 +22,10 @@ module.exports = {
 
         var reqBody = req.body
 
-        if (reqBody.entryName == undefined || reqBody.entryAmount == undefined || reqBody.entryYear == undefined) {
+        if (reqBody.entryName == undefined || reqBody.entryAmount == undefined || reqBody.entryClass == undefined) {
             return env.requestBodyFormatInvalid(res)
 
-        } else if (!reqBody.entryName || !reqBody.entryAmount || !reqBody.entryYear) {
+        } else if (!reqBody.entryName || !reqBody.entryAmount || !reqBody.entryClass) {
             return env.requestFormatInvalid(res)
 
         } else {
