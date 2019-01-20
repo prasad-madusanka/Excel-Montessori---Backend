@@ -1,6 +1,8 @@
 const studentsCollection = require('../../models/student/student.model')
 const illnessesCollection = require('../../models/illnesses/illness.model')
 const admissionCollection = require('../../models/payments/admission.model')
+const monthFeeCollection = require('../../models/payments/monthly-fee.model')
+const otherPaymentsCollection = require('../../models/payments/other-payments.model')
 
 const env = require('../../configuration/environment.config')
 
@@ -11,7 +13,8 @@ module.exports = {
         var reqBody = req.body
 
         new admissionCollection({
-            totalFee: reqBody.admissionFee
+            totalFee: reqBody.admissionFee,
+            facilityType: reqBody.ofFacilityType
         })
             .save()
             .then((dataAdmission) => {
@@ -69,29 +72,50 @@ module.exports = {
                             .save()
                             .then((dataStudent) => {
 
+                                new otherPaymentsCollection({
+                                    studentId: dataStudent._id
+                                })
+                                    .save()
+                                    .then((dataExtraPayments) => {
 
-                                admissionCollection.findOneAndUpdate(
-                                    { _id: dataAdmission._id },
-                                    { studentId: dataStudent._id },
-                                    { new: true, upsert: false }
-                                )
-                                    .then((dataAdmissionUpdated) => {
+                                        studentsCollection.updateOne(
+                                            { _id: dataStudent._id },
+                                            { otherPayments: dataExtraPayments._id },
+                                            { new: true, upsert: false }
+                                        )
+                                            .then((dataUpdatedStudent) => {
+                                                admissionCollection.findOneAndUpdate(
+                                                    { _id: dataAdmission._id },
+                                                    { studentId: dataStudent._id },
+                                                    { new: true, upsert: false }
+                                                )
+                                                    .then((dataAdmissionUpdated) => {
 
-                                        env.sendResponse(res, env.OK, { student: dataStudent, admissionModified: dataAdmissionUpdated })
+                                                        env.sendResponse(res, env.OK, { student: dataStudent, studentModified: dataUpdatedStudent, admissionModified: dataAdmissionUpdated })
+
+                                                    })
+                                                    .catch(err => {
+                                                        env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                                                    })
+                                            })
+                                            .catch(err => {
+                                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                                            })
 
                                     })
                                     .catch(err => {
                                         env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                                     })
 
+
                             })
                             .catch(err => {
-                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                             })
 
                     })
                     .catch(err => {
-                        env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+                        env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                     })
 
             })
@@ -103,7 +127,7 @@ module.exports = {
     getStudents: (req, res, next) => {
 
         studentsCollection.find()
-            .populate('stIllnessTypes admissionPayment')
+            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
             .then((dataStudents) => {
 
                 if (env.isEmpty(dataStudents)) {
@@ -121,25 +145,25 @@ module.exports = {
     getStudent: (req, res, next) => {
 
         var studentId = req.params.studentId
+        getStudentById(res, studentId)
 
-        studentsCollection.findOne({ _id: studentId })
-            .populate('stIllnessTypes admissionPayment')
-            .then((dataStudent) => {
 
-                if (!dataStudent) {
-                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+    },
+
+    getStudentByClass: (req, res, next) => {
+
+        studentsCollection.find({ stAdmittedClass: req.params.className })
+            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
+            .then((dataStudents) => {
+                if (env.isEmpty(dataStudents)) {
+                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
                 }
 
-                env.sendResponse(res, env.OK, dataStudent)
+                env.sendResponse(res, env.OK, dataStudents)
 
             })
             .catch(err => {
-
-                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
-                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
-                }
-
-                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_RECORD_NOT_FOUND, error: err.toString() })
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
             })
 
     },
@@ -148,21 +172,85 @@ module.exports = {
 
         var studentId = req.params.studentId
 
-        studentsCollection.deleteOne(
-            { _id: studentId }
-        )
+        studentsCollection.deleteOne
+            ({ _id: studentId })
             .then((dataStudent) => {
 
                 if (!dataStudent) {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                 }
 
-                env.sendResponse(res, env.OK, { message: dataStudent })
+                admissionCollection.deleteOne
+                    ({ 'studentId': studentId })
+                    .then((dataAdmission) => {
+
+                        if (!dataAdmission) {
+                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                        }
+
+                        monthFeeCollection.deleteMany
+                            ({ 'studentId': studentId })
+                            .then((dataMonthlyFee) => {
+
+                                if (!dataMonthlyFee) {
+                                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                                }
+
+                                otherPaymentsCollection.deleteOne
+                                    ({ 'studentId': studentId })
+                                    .then((dataOtherPayments) => {
+
+                                        if (!dataOtherPayments) {
+                                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                                        }
+
+                                        env.sendResponse(res, env.OK,
+                                            {
+                                                'student': dataStudent,
+                                                'admission': dataAdmission,
+                                                'monthleFee': dataMonthlyFee,
+                                                'otherPayments': dataOtherPayments
+                                            })
+
+                                    })
+                                    .catch(err => {
+
+                                        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                                            return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
+                                        }
+
+                                        return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+
+                                    })
+
+                            })
+                            .catch(err => {
+
+                                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
+                                }
+
+                                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+
+                            })
+
+                    })
+                    .catch(err => {
+
+                        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                            return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
+                        }
+
+                        return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+
+                    })
+
+
             })
             .catch(err => {
 
                 if (err.kind === 'ObjectId' || err.name === 'NotFound') {
-                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, uid: req.params.uid })
+                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
                 }
 
                 return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
@@ -238,8 +326,26 @@ module.exports = {
                             return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                         }
 
-                        env.sendResponse(res, env.OK, dataStudent)
+                        admissionCollection.updateOne
+                            (
+                                { 'studentId': studentId },
+                                {
+                                    facilityType: reqBody.ofFacilityType,
+                                    totalFee: reqBody.admissionFee
+                                },
+                                { new: true, upsert: false })
+                            .then((dataAdmissionUpdated) => {
 
+                                if (!dataAdmissionUpdated) {
+                                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                                }
+
+                                getStudentById(res, studentId)
+
+                            })
+
+
+                        //dataIllnessTypes
                     })
                     .catch(err => {
 
@@ -292,4 +398,28 @@ function studentStudingStatus(req, res, isDiscontinue) {
             return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_RECORD_NOT_FOUND, error: err.toString() })
         })
 
+}
+
+function getStudentById(res, studentId) {
+
+
+    studentsCollection.findOne({ _id: studentId })
+        .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
+        .then((dataStudent) => {
+
+            if (!dataStudent) {
+                return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+            }
+
+            env.sendResponse(res, env.OK, dataStudent)
+
+        })
+        .catch(err => {
+
+            if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
+            }
+
+            return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_RECORD_NOT_FOUND, error: err.toString() })
+        })
 }

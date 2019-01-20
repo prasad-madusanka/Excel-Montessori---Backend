@@ -45,14 +45,14 @@ const studentSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Admission'
     },
-    monthlyPayment:[{
+    monthlyFee:[{
         type: mongoose.Schema.Types.ObjectId,
-        ref:'Monthly_Fee'
+        ref:'MonthlyFee'
     }],
-    extraPayments:[{
+    otherPayments:{
         type:mongoose.Schema.Types.ObjectId,
-        ref:'Extra_Payments'
-    }]
+        ref:'OtherPayments'
+    }
 
 }, {
         timestamps: true

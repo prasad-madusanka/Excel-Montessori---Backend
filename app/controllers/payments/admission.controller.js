@@ -7,12 +7,22 @@ module.exports = {
 
         var reqBody = req.body
 
+        var dateObj = new Date()
+        var curTime = dateObj.getHours() + ':' + dateObj.getMinutes() + ':' + dateObj.getSeconds()
+        var curDate = dateObj.getFullYear() + '-' + (dateObj.getMonth() + 1) + '-' + dateObj.getDay()
+
         admissionCollection.findOneAndUpdate(
-            { _id: reqBody._id },
+            {
+                $or: [
+                    { _id: reqBody._id },
+                    { studentId: reqBody._id }
+                ]
+            },
             {
                 $push: {
                     installments: {
-                        "installmentDate": new Date(),
+                        "installmentDate": curDate,
+                        "installmentTime": curTime,
                         "reciept": reqBody.installment.reciept,
                         "amount": reqBody.installment.amount
 
@@ -103,7 +113,7 @@ module.exports = {
     getAdmissionPayments: (req, res, next) => {
         admissionCollection.find()
             .then((dataAdmissions) => {
-                if (!dataAdmissions) {
+                if (env.isEmpty(dataAdmissions)) {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
                 }
 

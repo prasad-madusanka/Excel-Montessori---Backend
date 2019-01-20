@@ -6,11 +6,13 @@ const admissionSchema = mongoose.Schema({
         ref: 'Students'
     },
     installments: [{
-        installmentDate: Date,
+        installmentDate: String,
+        installmentTime: String,
         reciept: String,
         amount: Number
     }],
-    totalFee: Number
+    totalFee: Number,
+    facilityType: String
 }, {
         timestamps: true
     })
