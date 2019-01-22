@@ -3,8 +3,11 @@ const illnessesCollection = require('../../models/illnesses/illness.model')
 const admissionCollection = require('../../models/payments/admission.model')
 const monthFeeCollection = require('../../models/payments/monthly-fee.model')
 const otherPaymentsCollection = require('../../models/payments/other-payments.model')
+const paymentEntriesCollection = require('../../models/system-entries/payment-entries.model')
 
 const env = require('../../configuration/environment.config')
+
+var school_only = 'School only'
 
 module.exports = {
 
@@ -29,78 +32,99 @@ module.exports = {
                 })
                     .save()
                     .then((dataIllnessTypes) => {
+                        paymentEntriesCollection.findOne(
+                            {
+                                $and: [
+                                    { entryClass: reqBody.stAdmittedClass },
+                                    { entryName: school_only }
+                                ]
+                            }
 
-                        new studentsCollection({
-                            stName: reqBody.stName,
-                            stPreferedName: reqBody.stPreferedName,
-                            stDOB: reqBody.stDOB,
-                            stGender: reqBody.stGender,
-                            stReligion: reqBody.stReligion,
-                            stNationality: reqBody.stNationality,
-                            stLanguage1: reqBody.stLanguage1,
-                            stLanguage2: reqBody.stLanguage2,
-                            stHomeAddress: reqBody.stHomeAddress,
-                            stHomeTelephone: reqBody.stHomeTelephone,
-                            faName: reqBody.faName,
-                            faNIC: reqBody.faNIC,
-                            faOccupation: reqBody.faOccupation,
-                            faOfficeAddress: reqBody.faOfficeAddress,
-                            faMobile: reqBody.faMobile,
-                            faOffTelephone: reqBody.faOffTelephone,
-                            moName: reqBody.moName,
-                            moNIC: reqBody.moNIC,
-                            moOccupation: reqBody.moOccupation,
-                            moOfficeAddress: reqBody.moOfficeAddress,
-                            moMobile: reqBody.moMobile,
-                            moOffTelephone: reqBody.moOffTelephone,
-                            picUpName1: reqBody.picUpName1,
-                            picUpNIC1: reqBody.picUpNIC1,
-                            picUpName2: reqBody.picUpName2,
-                            picUpNIC2: reqBody.picUpNIC2,
-                            ecName: reqBody.ecName,
-                            ecRelationship: reqBody.ecRelationship,
-                            ecAddress: reqBody.ecAddress,
-                            ecTelephone: reqBody.ecTelephone,
-                            stIllnessTypes: dataIllnessTypes._id,
-                            ofFacilityType: reqBody.ofFacilityType,
-                            stAdmittedMonth: reqBody.stAdmittedMonth,
-                            stAdmittedYear: reqBody.stAdmittedYear,
-                            stAdmittedClass: reqBody.stAdmittedClass,
-                            discontinue: false,
-                            admissionPayment: dataAdmission._id
-                        })
-                            .save()
-                            .then((dataStudent) => {
+                        )
+                            .then((dataPaymentEntries) => {
 
-                                new otherPaymentsCollection({
-                                    studentId: dataStudent._id
+                                if (!dataPaymentEntries) {
+                                    return env.sendResponse(res, env.BAD_REQUEST, { message: 'Payment entry not available' })
+                                }
+
+                                new studentsCollection({
+                                    stName: reqBody.stName,
+                                    stPreferedName: reqBody.stPreferedName,
+                                    stDOB: reqBody.stDOB,
+                                    stGender: reqBody.stGender,
+                                    stReligion: reqBody.stReligion,
+                                    stNationality: reqBody.stNationality,
+                                    stLanguage1: reqBody.stLanguage1,
+                                    stLanguage2: reqBody.stLanguage2,
+                                    stHomeAddress: reqBody.stHomeAddress,
+                                    stHomeTelephone: reqBody.stHomeTelephone,
+                                    faName: reqBody.faName,
+                                    faNIC: reqBody.faNIC,
+                                    faOccupation: reqBody.faOccupation,
+                                    faOfficeAddress: reqBody.faOfficeAddress,
+                                    faMobile: reqBody.faMobile,
+                                    faOffTelephone: reqBody.faOffTelephone,
+                                    moName: reqBody.moName,
+                                    moNIC: reqBody.moNIC,
+                                    moOccupation: reqBody.moOccupation,
+                                    moOfficeAddress: reqBody.moOfficeAddress,
+                                    moMobile: reqBody.moMobile,
+                                    moOffTelephone: reqBody.moOffTelephone,
+                                    picUpName1: reqBody.picUpName1,
+                                    picUpNIC1: reqBody.picUpNIC1,
+                                    picUpName2: reqBody.picUpName2,
+                                    picUpNIC2: reqBody.picUpNIC2,
+                                    ecName: reqBody.ecName,
+                                    ecRelationship: reqBody.ecRelationship,
+                                    ecAddress: reqBody.ecAddress,
+                                    ecTelephone: reqBody.ecTelephone,
+                                    stIllnessTypes: dataIllnessTypes._id,
+                                    ofFacilityType: reqBody.ofFacilityType,
+                                    stAdmittedMonth: reqBody.stAdmittedMonth,
+                                    stAdmittedYear: reqBody.stAdmittedYear,
+                                    stAdmittedClass: reqBody.stAdmittedClass,
+                                    discontinue: false,
+                                    admissionPayment: dataAdmission._id,
+                                    monthlyFeeClass: dataPaymentEntries._id
                                 })
                                     .save()
-                                    .then((dataExtraPayments) => {
+                                    .then((dataStudent) => {
 
-                                        studentsCollection.updateOne(
-                                            { _id: dataStudent._id },
-                                            { otherPayments: dataExtraPayments._id },
-                                            { new: true, upsert: false }
-                                        )
-                                            .then((dataUpdatedStudent) => {
-                                                admissionCollection.findOneAndUpdate(
-                                                    { _id: dataAdmission._id },
-                                                    { studentId: dataStudent._id },
+                                        new otherPaymentsCollection({
+                                            studentId: dataStudent._id
+                                        })
+                                            .save()
+                                            .then((dataExtraPayments) => {
+
+                                                studentsCollection.updateOne(
+                                                    { _id: dataStudent._id },
+                                                    { otherPayments: dataExtraPayments._id },
                                                     { new: true, upsert: false }
                                                 )
-                                                    .then((dataAdmissionUpdated) => {
+                                                    .then((dataUpdatedStudent) => {
+                                                        admissionCollection.findOneAndUpdate(
+                                                            { _id: dataAdmission._id },
+                                                            { studentId: dataStudent._id },
+                                                            { new: true, upsert: false }
+                                                        )
+                                                            .then((dataAdmissionUpdated) => {
 
-                                                        env.sendResponse(res, env.OK, { student: dataStudent, studentModified: dataUpdatedStudent, admissionModified: dataAdmissionUpdated })
+                                                                env.sendResponse(res, env.OK, { student: dataStudent, studentModified: dataUpdatedStudent, admissionModified: dataAdmissionUpdated })
 
+                                                            })
+                                                            .catch(err => {
+                                                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                                                            })
                                                     })
                                                     .catch(err => {
                                                         env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                                                     })
+
                                             })
                                             .catch(err => {
                                                 env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                                             })
+
 
                                     })
                                     .catch(err => {
@@ -108,10 +132,12 @@ module.exports = {
                                     })
 
 
+
                             })
                             .catch(err => {
                                 env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
                             })
+
 
                     })
                     .catch(err => {
@@ -127,7 +153,7 @@ module.exports = {
     getStudents: (req, res, next) => {
 
         studentsCollection.find()
-            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
+            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments monthlyFeeClass')
             .then((dataStudents) => {
 
                 if (env.isEmpty(dataStudents)) {
@@ -153,7 +179,7 @@ module.exports = {
     getStudentByClass: (req, res, next) => {
 
         studentsCollection.find({ stAdmittedClass: req.params.className })
-            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
+            .populate('stIllnessTypes admissionPayment monthlyFee otherPayments monthlyFeeClass')
             .then((dataStudents) => {
                 if (env.isEmpty(dataStudents)) {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
@@ -282,80 +308,100 @@ module.exports = {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                 }
 
-                studentsCollection.updateOne(
-                    { _id: studentId },
+                paymentEntriesCollection.findOne(
                     {
-                        stName: reqBody.stName,
-                        stPreferedName: reqBody.stPreferedName,
-                        stDOB: reqBody.stDOB,
-                        stGender: reqBody.stGender,
-                        stReligion: reqBody.stReligion,
-                        stNationality: reqBody.stNationality,
-                        stLanguage1: reqBody.stLanguage1,
-                        stLanguage2: reqBody.stLanguage2,
-                        stHomeAddress: reqBody.stHomeAddress,
-                        stHomeTelephone: reqBody.stHomeTelephone,
-                        faName: reqBody.faName,
-                        faNIC: reqBody.faNIC,
-                        faOccupation: reqBody.faOccupation,
-                        faOfficeAddress: reqBody.faOfficeAddress,
-                        faMobile: reqBody.faMobile,
-                        faOffTelephone: reqBody.faOffTelephone,
-                        moName: reqBody.moName,
-                        moNIC: reqBody.moNIC,
-                        moOccupation: reqBody.moOccupation,
-                        moOfficeAddress: reqBody.moOfficeAddress,
-                        moMobile: reqBody.moMobile,
-                        moOffTelephone: reqBody.moOffTelephone,
-                        picUpName1: reqBody.picUpName1,
-                        picUpNIC1: reqBody.picUpNIC1,
-                        picUpName2: reqBody.picUpName2,
-                        picUpNIC2: reqBody.picUpNIC2,
-                        ecName: reqBody.ecName,
-                        ecRelationship: reqBody.ecRelationship,
-                        ecAddress: reqBody.ecAddress,
-                        ecTelephone: reqBody.ecTelephone,
-                        ofFacilityType: reqBody.ofFacilityType,
-                        stAdmittedMonth: reqBody.stAdmittedMonth,
-                        stAdmittedYear: reqBody.stAdmittedYear,
-                        stAdmittedClass: reqBody.stAdmittedClass
-                    })
-                    .then((dataStudent) => {
+                        $and: [
+                            { entryClass: reqBody.stAdmittedClass },
+                            { entryName: school_only }
+                        ]
+                    }
 
-                        if (!dataStudent) {
-                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                )
+                    .then((dataPaymentEntries) => {
+
+                        if (!dataPaymentEntries) {
+                            return env.sendResponse(res, env.BAD_REQUEST, { message: 'Payment entry not available' })
                         }
 
-                        admissionCollection.updateOne
-                            (
-                                { 'studentId': studentId },
-                                {
-                                    facilityType: reqBody.ofFacilityType,
-                                    totalFee: reqBody.admissionFee
-                                },
-                                { new: true, upsert: false })
-                            .then((dataAdmissionUpdated) => {
+                        studentsCollection.updateOne(
+                            { _id: studentId },
+                            {
+                                stName: reqBody.stName,
+                                stPreferedName: reqBody.stPreferedName,
+                                stDOB: reqBody.stDOB,
+                                stGender: reqBody.stGender,
+                                stReligion: reqBody.stReligion,
+                                stNationality: reqBody.stNationality,
+                                stLanguage1: reqBody.stLanguage1,
+                                stLanguage2: reqBody.stLanguage2,
+                                stHomeAddress: reqBody.stHomeAddress,
+                                stHomeTelephone: reqBody.stHomeTelephone,
+                                faName: reqBody.faName,
+                                faNIC: reqBody.faNIC,
+                                faOccupation: reqBody.faOccupation,
+                                faOfficeAddress: reqBody.faOfficeAddress,
+                                faMobile: reqBody.faMobile,
+                                faOffTelephone: reqBody.faOffTelephone,
+                                moName: reqBody.moName,
+                                moNIC: reqBody.moNIC,
+                                moOccupation: reqBody.moOccupation,
+                                moOfficeAddress: reqBody.moOfficeAddress,
+                                moMobile: reqBody.moMobile,
+                                moOffTelephone: reqBody.moOffTelephone,
+                                picUpName1: reqBody.picUpName1,
+                                picUpNIC1: reqBody.picUpNIC1,
+                                picUpName2: reqBody.picUpName2,
+                                picUpNIC2: reqBody.picUpNIC2,
+                                ecName: reqBody.ecName,
+                                ecRelationship: reqBody.ecRelationship,
+                                ecAddress: reqBody.ecAddress,
+                                ecTelephone: reqBody.ecTelephone,
+                                ofFacilityType: reqBody.ofFacilityType,
+                                stAdmittedMonth: reqBody.stAdmittedMonth,
+                                stAdmittedYear: reqBody.stAdmittedYear,
+                                stAdmittedClass: reqBody.stAdmittedClass,
+                                monthlyFeeClass: dataPaymentEntries._id
+                            })
+                            .then((dataStudent) => {
 
-                                if (!dataAdmissionUpdated) {
+                                if (!dataStudent) {
                                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                                 }
 
-                                getStudentById(res, studentId)
+                                admissionCollection.updateOne
+                                    (
+                                        { 'studentId': studentId },
+                                        {
+                                            facilityType: reqBody.ofFacilityType,
+                                            totalFee: reqBody.admissionFee
+                                        },
+                                        { new: true, upsert: false })
+                                    .then((dataAdmissionUpdated) => {
 
+                                        if (!dataAdmissionUpdated) {
+                                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                                        }
+
+                                        getStudentById(res, studentId)
+
+                                    })
+
+
+                                //dataIllnessTypes
+                            })
+                            .catch(err => {
+
+                                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
+                                }
+
+                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
                             })
 
-
-                        //dataIllnessTypes
                     })
                     .catch(err => {
-
-                        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
-                            return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, 'studentId': studentId })
-                        }
-
                         env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
                     })
-
             })
             .catch(err => {
 
@@ -404,7 +450,7 @@ function getStudentById(res, studentId) {
 
 
     studentsCollection.findOne({ _id: studentId })
-        .populate('stIllnessTypes admissionPayment monthlyFee otherPayments')
+        .populate('stIllnessTypes admissionPayment monthlyFee otherPayments monthlyFeeClass')
         .then((dataStudent) => {
 
             if (!dataStudent) {

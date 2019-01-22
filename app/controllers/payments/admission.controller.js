@@ -56,7 +56,7 @@ module.exports = {
         var reqBody = req.body
 
         admissionCollection.findOneAndUpdate(
-            { _id: reqBody._id, 'installments.reciept': reqBody.reciept },
+            { _id: reqBody._id, 'installments._id': reqBody.recordId },
             {
                 $set: {
                     'installments.$.reciept': reqBody.installment.reciept,
@@ -89,7 +89,7 @@ module.exports = {
 
         admissionCollection.updateOne(
             { _id: reqBody._id },
-            { $pull: { installments: { reciept: reqBody.reciept } } },
+            { $pull: { installments: { _id: reqBody.recordId } } },
             { new: true, upsert: false }
         )
             .then((dataAdmissionPaymentDelete) => {
@@ -98,7 +98,16 @@ module.exports = {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                 }
 
-                env.sendResponse(res, env.OK, dataAdmissionPaymentDelete)
+                admissionCollection.findOne({ _id: reqBody._id })
+                    .then((dataAdmission) => {
+                        if (!dataAdmission) {
+                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
+                        }
+
+                        env.sendResponse(res, env.OK, { deletedStatus: dataAdmissionPaymentDelete, admissionCurrent: dataAdmission })
+                    })
+
+
             })
             .catch(err => {
 

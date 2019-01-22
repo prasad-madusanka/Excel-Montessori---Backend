@@ -124,6 +124,34 @@ module.exports = {
 
     },
 
+    getPaymentEntriesByClass: (req, res, next) => {
+
+        var reqBody = req.body
+
+        pEntriesCollection.find(
+            {
+                $and: [
+                    { entryClass: reqBody.class },
+                    { isSchool: reqBody.isSchool }
+                ]
+            }
+        )
+            .then((dataPEntries) => {
+
+                if (env.isEmpty(dataPEntries)) {
+                    return env.sendResponse(res, env.NOT_FOUND, env.TAG_NO_RECORDS_FOUND)
+                }
+
+                env.sendResponse(res, env.OK, dataPEntries)
+
+            })
+            .catch(err=>{
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+            })
+
+
+    },
+
     updatePaymentEntries: (req, res, next) => {
 
         var reqBody = req.body

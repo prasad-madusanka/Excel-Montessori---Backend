@@ -51,7 +51,7 @@ module.exports = {
         otherPaymentsCollection.findOneAndUpdate(
             {
                 $and: [
-                    { 'payments.reciept': reqBody.reciept },
+                    { 'payments._id': reqBody.recordID },
                     { $or: [{ _id: reqBody._id }, { studentId: reqBody._id }] }
                 ]
             },
@@ -93,7 +93,7 @@ module.exports = {
                     { studentId: reqBody._id }
                 ]
             },
-            { $pull: { payments: { reciept: reqBody.reciept } } },
+            { $pull: { payments: { _id: reqBody.recordID } } },
             { new: true, upsert: false }
         )
             .then((dataOtherPaymentDelete) => {
@@ -102,7 +102,23 @@ module.exports = {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                 }
 
-                env.sendResponse(res, env.OK, dataOtherPaymentDelete)
+                otherPaymentsCollection.findOne({ _id: reqBody._id })
+                    .then((dataOtherPaymentsRes) => {
+
+                        // if (env.isEmpty(dataOtherPaymentsRes)) {
+                        //     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
+                        // }
+
+                        env.sendResponse(res, env.OK, dataOtherPaymentsRes)
+
+                    })
+                    .catch(err => {
+                        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                            return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, recordId: reqBody._id })
+                        }
+
+                        return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                    })
             })
             .catch(err => {
 

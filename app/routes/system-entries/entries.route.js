@@ -9,6 +9,7 @@ module.exports = (app) => {
         .delete('/excel/entries/non-payment/:eid', entriesController.deleteNonPaymentEntries)
         .post('/excel/entries/payment', entriesMiddleware.validatePaymentEntries, entriesController.addPaymentEntries)
         .get('/excel/entries/payment', entriesController.getPaymentEntries)
+        .get('/excel/entries/payment/class', entriesController.getPaymentEntriesByClass)
         .put('/excel/entries/payment', entriesController.updatePaymentEntries)
         .delete('/excel/entries/payment/:eid', entriesController.deletePaymentEntries)
 

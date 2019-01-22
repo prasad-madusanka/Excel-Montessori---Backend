@@ -39,7 +39,23 @@ module.exports = {
                             return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                         }
 
-                        env.sendResponse(res, env.OK, { student: dataStudent, monthlyFee: dataMonthlyFee })
+
+                        monthlyFeeCollection.find({ studentId: reqBody.studentId })
+                            .then((mMonthlyPaymentData) => {
+                                if (env.isEmpty(mMonthlyPaymentData)) {
+                                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
+                                }
+
+                                env.sendResponse(res, env.OK, mMonthlyPaymentData)
+
+                            })
+                            .catch(err => {
+                                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, studentId: reqBody.studentId })
+                                }
+
+                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+                            })
 
                     })
                     .catch(err => {
@@ -70,8 +86,7 @@ module.exports = {
                 month: reqBody.month,
                 amount: reqBody.amount,
                 totalAmount: reqBody.totalAmount,
-                reciept: reqBody.reciept,
-                status: reqBody.status
+                reciept: reqBody.reciept
             },
             { new: true, upsert: false }
         )
@@ -81,7 +96,25 @@ module.exports = {
                     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                 }
 
-                env.sendResponse(res, env.OK, dataMonthlyFee)
+                monthlyFeeCollection.find({ studentId: reqBody.studentId })
+                    .then((mSchoolPayments) => {
+
+                        if (env.isEmpty(mSchoolPayments)) {
+                            return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
+                        }
+
+                        env.sendResponse(res, env.OK, mSchoolPayments)
+
+                    })
+                    .catch(err => {
+                        if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                            return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, studentId: reqBody.studentId })
+                        }
+
+                        env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+                    })
+
+
 
             })
             .catch(err => {
@@ -120,7 +153,23 @@ module.exports = {
                             return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_RECORD_NOT_FOUND })
                         }
 
-                        env.sendResponse(res, env.OK, { student: dataStudent, monthlyFee: dataMonthlyFee })
+                        monthlyFeeCollection.find({ studentId: reqBody.studentId })
+                            .then((mSchoolPayments) => {
+
+                                // if (env.isEmpty(mSchoolPayments)) {
+                                //     return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_NO_RECORDS_FOUND })
+                                // }
+
+                                env.sendResponse(res, env.OK, mSchoolPayments)
+
+                            })
+                            .catch(err => {
+                                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                                    return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { error: env.TAG_SEARCH_DATA_INVALID, studentId: reqBody.studentId })
+                                }
+
+                                env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+                            })
 
                     })
                     .catch(err => {
