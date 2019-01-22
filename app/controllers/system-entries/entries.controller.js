@@ -8,16 +8,30 @@ module.exports = {
 
         var reqBody = req.body
 
-        new npEntriesCollection({
-            entryName: reqBody.entryName,
-            entryYear: reqBody.entryYear
-        })
-            .save()
-            .then((data) => {
-                env.sendResponse(res, env.OK, data)
+        npEntriesCollection.findOne(
+            { entryName: reqBody.entryName }
+        )
+            .then((dataNPEntries) => {
+                if (dataNPEntries) {
+                    return env.sendResponse(res, env.OK, { 'message': '* Class name alreday exist *', 'action': false })
+                }
+
+                new npEntriesCollection({
+                    entryName: reqBody.entryName,
+                    entryYear: reqBody.entryYear
+                })
+                    .save()
+                    .then((data) => {
+                        env.sendResponse(res, env.OK, data)
+                    })
+                    .catch(err => {
+                        return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                    })
+
+
             })
             .catch(err => {
-                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
             })
 
     },
@@ -89,19 +103,40 @@ module.exports = {
 
         var reqBody = req.body
 
-        new pEntriesCollection({
-            entryName: reqBody.entryName,
-            entryAmount: reqBody.entryAmount,
-            entryClass: reqBody.entryClass,
-            isSchool: reqBody.isSchool
-        })
-            .save()
-            .then((data) => {
-                env.sendResponse(res, env.OK, data)
+        pEntriesCollection.findOne(
+            {
+                $and: [
+                    { entryName: reqBody.entryName },
+                    { entryClass: reqBody.entryClass }
+                ]
+            }
+        )
+            .then((dataPEntries) => {
+                if (dataPEntries) {
+                    return env.sendResponse(res, env.OK, { 'message': '* Same record exist on same class *', 'action': false })
+                }
+
+                new pEntriesCollection({
+                    entryName: reqBody.entryName,
+                    entryAmount: reqBody.entryAmount,
+                    entryClass: reqBody.entryClass,
+                    isSchool: reqBody.isSchool
+                })
+                    .save()
+                    .then((data) => {
+                        env.sendResponse(res, env.OK, data)
+                    })
+                    .catch(err => {
+                        return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                    })
+
+
             })
             .catch(err => {
-                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
             })
+
+
     },
 
     getPaymentEntries: (req, res, next) => {
@@ -145,7 +180,7 @@ module.exports = {
                 env.sendResponse(res, env.OK, dataPEntries)
 
             })
-            .catch(err=>{
+            .catch(err => {
                 return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
             })
 

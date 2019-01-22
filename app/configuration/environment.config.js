@@ -15,6 +15,7 @@ module.exports = {
     TAG_SEARCH_DATA_INVALID: 'Search data invalid',
     TAG_USER_EXIST: 'User already exist',
     TAG_NO_RECORDS_FOUND: 'No records found',
+    TAG_NOT_MODIFIED: 'No records found',
 
 
     //HTTP response codes

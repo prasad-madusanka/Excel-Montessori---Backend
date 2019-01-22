@@ -145,20 +145,39 @@ module.exports = {
         admissionsPayments(req, res, 0)
     },
 
-    // getAdmissionPaidStudent: (req, res, next) => {
+    updateSettlementStatus: (req, res, next) => {
 
-    //     var reqParams = req.params
+        var reqBody = req.body
 
-    //     admissionCollection.findOne(
-    //         {
-    //             $and: [
-    //                 { studentId: reqParams.studentId },
-    //                 {}
-    //             ]
-    //         }
-    //     )
-    // }
+        admissionCollection.findOneAndUpdate(
+            {
+                $or: [
+                    { _id: reqBody._id },
+                    { studentId: reqBody._id }
+                ]
+            }, {
+                status: reqBody.status
+            },
+            { new: true, upsert: false }
+        )
+            .then((dataAdmissionUpdated) => {
 
+                if (!dataAdmissionUpdated) {
+                    return env.sendResponse(res, env.NOT_MODIFIED, env.TAG_NOT_MODIFIED)
+                }
+
+                env.sendResponse(res, env.OK, dataAdmissionUpdated)
+
+            })
+            .catch(err => {
+                if (err.kind === 'ObjectId' || err.name === 'NotFound') {
+                    return env.sendResponse(res, env.NOT_FOUND, { error: env.TAG_SEARCH_DATA_INVALID, recordId: reqBody._id })
+                }
+
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, { message: env.TAG_ACTION_FAILED, error: err.toString() })
+            })
+
+    }
 }
 
 function admissionsPayments(req, res, length) {

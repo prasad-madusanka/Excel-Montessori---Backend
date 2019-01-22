@@ -12,7 +12,8 @@ const admissionSchema = mongoose.Schema({
         amount: Number
     }],
     totalFee: Number,
-    facilityType: String
+    facilityType: String,
+    status: String
 }, {
         timestamps: true
     })
