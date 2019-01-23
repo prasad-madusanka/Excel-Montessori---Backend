@@ -46,6 +46,7 @@ require('./app/routes/student/student.route')(app)
 require('./app/routes/payments/admission.route')(app)
 require('./app/routes/payments/monthly-fee.route')(app)
 require('./app/routes/payments/other-payments.route')(app)
+require('./app/routes/reports/reports.route')(app)
 
 app.listen(env.PORT, () => {
     console.log('Server is running')

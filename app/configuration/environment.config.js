@@ -29,6 +29,8 @@ module.exports = {
     TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
 
+    REPORT_STATUS_ADMISSION: ['NOT PAID', 'PAID', 'OVER PAID'],
+
 
     //Reusable methods
     sendResponse: (res, responseCode, responseMessage) => {
