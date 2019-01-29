@@ -1,4 +1,5 @@
 const admissionCollection = require('../../models/payments/admission.model')
+const studentController = require('../../models/student/student.model')
 const env = require('../../configuration/environment.config')
 
 module.exports = {
@@ -23,6 +24,32 @@ module.exports = {
                 }
 
                 env.sendResponse(res, env.OK, dataAdmissionPaymentStatus)
+
+            })
+            .catch(err => {
+                return env.sendResponse(res, env.INTERNAL_SERVER_ERROR, err.toString())
+            })
+
+    },
+
+    getStudentsNotDiscontinue: (req, res, next) => {
+
+        var isDiscontinued = req.body.isDiscontinued
+        var className = req.body.className
+
+        studentController.find({
+            $and: [
+                { discontinue: isDiscontinued },
+                { stAdmittedClass: className }
+            ]
+        })
+            .populate('monthlyFee')
+            .then((dataStudent) => {
+                if (env.isEmpty(dataStudent)) {
+                    return env.sendResponse(res, env.NOT_FOUND, env.TAG_NO_RECORDS_FOUND)
+                }
+
+                env.sendResponse(res, env.OK, dataStudent)
 
             })
             .catch(err => {

@@ -11,7 +11,7 @@ const app = express()
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(bodyParser.json())
 
-var originsWhitelist = ['http://localhost:4200']
+var originsWhitelist = ['http://localhost:4200','http://localhost']
 
 var corsOptions = {
     origin: function (origin, callback) {

@@ -8,13 +8,18 @@ module.exports = {
         var reqBody = req.body
 
         userCollection.findOne(
-            { username: reqBody.username }
+            {
+                $and: [
+                    { username: reqBody.username },
+                    { password: reqBody.password }
+                ]
+            }
         )
             .select('role username name')
             .then((data) => {
 
                 if (!data) {
-                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_USER_NOT_FOUND })
+                    return env.sendResponse(res, env.NOT_FOUND, { message: env.TAG_USER_NOT_FOUND, status: true })
                 }
 
                 env.sendResponse(res, env.OK, data)
